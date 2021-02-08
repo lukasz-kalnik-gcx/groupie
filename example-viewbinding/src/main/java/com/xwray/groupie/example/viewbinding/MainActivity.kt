@@ -93,107 +93,32 @@ class MainActivity : AppCompatActivity() {
         }
         binding.fab.setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
         prefs.registerListener(onSharedPrefChangeListener)
+
+        binding.update.setOnClickListener { populateAdapter() }
     }
 
     private fun populateAdapter() {
 
-        // Full bleed item
-        groupAdapter.add(Section(HeaderItem(R.string.full_bleed_item)).apply {
-            add(FullBleedCardItem(ContextCompat.getColor(this@MainActivity, R.color.purple_200)))
-        })
-
-        // Update in place group
-        groupAdapter.add(Section().apply {
-            val updatingGroup = Section()
-            val updatingHeader = HeaderItem(
-                R.string.updating_group,
-                R.string.updating_group_subtitle,
-                R.drawable.shuffle
-            ) {
-                updatingGroup.update(ArrayList(updatableItems).apply { shuffle() })
-
-                // You can also do this by forcing a change with payload
-                binding.recyclerView.post { binding.recyclerView.invalidateItemDecorations() }
-            }
-            setHeader(updatingHeader)
-            updatableItems = ArrayList()
-            for (i in 1..12) {
-                updatableItems.add(UpdatableItem(rainbow200[i], i))
-            }
-            updatingGroup.update(updatableItems)
-            add(updatingGroup)
-        })
-
         // Expandable group
-        val expandableHeaderItem = ExpandableHeaderItem(R.string.expanding_group, R.string.expanding_group_subtitle)
-        groupAdapter.add(ExpandableGroup(expandableHeaderItem).apply {
-            for (i in 0..1) {
-                add(CardItem(rainbow200[1]))
-            }
-        })
-
-        // Columns
-        groupAdapter.add(Section(HeaderItem(R.string.vertical_columns)).apply {
-            add(makeColumnGroup())
-        })
-
-        // Group showing even spacing with multiple columns
-        groupAdapter.add(Section(HeaderItem(R.string.multiple_columns)).apply {
-            for (i in 0..11) {
-                add(SmallCardItem(rainbow200[5]))
-            }
-        })
-
-        // Swipe to delete (with add button in header)
-        for (i in 0..2) {
-            swipeSection.add(SwipeToDeleteItem(rainbow200[6]))
-        }
-        groupAdapter.add(swipeSection)
-
-        // Horizontal carousel
-        groupAdapter.add(Section(HeaderItem(R.string.carousel, R.string.carousel_subtitle)).apply {
-            setHideWhenEmpty(true)
-            add(makeCarouselGroup())
-        })
-
-        // Update with payload
-        groupAdapter.add(Section(HeaderItem(R.string.update_with_payload, R.string.update_with_payload_subtitle)).also {
-            for (i in rainbow500.indices) {
-                it.add(HeartCardItem(rainbow200[i], i.toLong()) { item, favorite ->
-                    // Pretend to make a network request
-                    lifecycleScope.launch {
-                        delay(1000)
-                        item.setFavorite(favorite)
-                        item.notifyChanged(HeartCardItem.FAVORITE)
+        val expandableHeaderItem = ExpandableHeaderItem(
+            ExpandableHeaderItemData(
+                R.string.expanding_group,
+                R.string.expanding_group_subtitle,
+                headerId = 0
+            )
+        )
+        groupAdapter.update(
+            listOf(
+                ExpandableGroup(
+                    expandableHeaderItem,
+                    true
+                ).also { expandableGroup ->
+                    for (i in 0..1) {
+                        expandableGroup.add(CardItem(rainbow200[i]))
                     }
-                })
-            }
-        })
-
-        // Infinite loading section
-        groupAdapter.add(infiniteLoadingSection)
-    }
-
-    private fun makeColumnGroup(): ColumnGroup {
-        val columnItems = ArrayList<ColumnItem>()
-        for (i in 1..5) {
-            // First five items are red -- they'll end up in a vertical column
-            columnItems.add(ColumnItem(rainbow200[0], i))
-        }
-        for (i in 6..10) {
-            // Next five items are pink
-            columnItems.add(ColumnItem(rainbow200[1], i))
-        }
-        return ColumnGroup(columnItems)
-    }
-
-    private fun makeCarouselGroup(): Group {
-        val carouselDecoration = CarouselItemDecoration(gray, betweenPadding)
-        val carouselAdapter = GroupieAdapter()
-        for (i in 0..9) {
-            carouselAdapter.add(CarouselCardItem(rainbow200[i]))
-        }
-        return CarouselGroup(carouselDecoration, carouselAdapter)
+                }
+            )
+        )
     }
 
     private val onItemClickListener = OnItemClickListener { item, _ ->
